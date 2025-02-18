@@ -53,8 +53,13 @@ function VideoCall() {
   );
 
   const sendStreams = useCallback(() => {
+    console.log("Peer", peer.peer);
+    
     for (const track of myStream.getTracks()) {
+      console.log({track, myStream});
+      
       peer.peer.addTrack(track, myStream);
+      
     }
   }, [myStream]);
 
@@ -101,6 +106,8 @@ function VideoCall() {
   }, []);
 
   useEffect(() => {
+    console.log();
+
     socket.on("user:joined", handleUserJoined);
     socket.on("incomming:call", handleIncommingCall);
     socket.on("call:accepted", handleCallAccepted);
@@ -125,38 +132,45 @@ function VideoCall() {
 
   return (
     <div>
-      <h1>VideoCall Room</h1>
+      <h1 className="text-amber-600 text-2xl text-center font-bold bg-emerald-200 px-12 py-4">
+        VideoCall Room
+      </h1>
 
-      <h4>{remoteSocketId ? "Connected" : "No one in room"}</h4>
-      {myStream && <button onClick={sendStreams}>Send Stream</button>}
-      {remoteSocketId && <button onClick={handleCallUser}>CALL</button>}
-      {myStream && (
-        <>
-          <h1>My Stream</h1>
-          <ReactPlayer
-            playing
-            muted
-            height="100px"
-            width="200px"
-            url={myStream}
-          />
-        </>
-      )}
-      {remoteStream && (
-        <>
-          <h1>Remote Stream</h1>
-          <ReactPlayer
-            playing
-            muted
-            height="100px"
-            width="200px"
-            url={remoteStream}
-          />
-        </>
-      )}
+      <div className="flex justify-center mt-20">
+        <h4>{remoteSocketId ? "Connected" : "No one in room"}</h4>
 
-      {/* <ReactPlayer url={myStream} playing muted />
+        {myStream && <button onClick={sendStreams}>Send Stream</button>}
+
+        {remoteSocketId && <button className="mx-4" onClick={handleCallUser}>CALL</button>}
+
+        {myStream && (
+          <>
+            <h1 className=" mx-8">My Stream</h1>
+            <ReactPlayer
+              playing
+              muted
+              height="100px"
+              width="200px"
+              url={myStream}
+            />
+          </>
+        )}
+        {remoteStream && (
+          <>
+            <h1>Remote Stream</h1>
+            <ReactPlayer
+              playing
+              muted
+              height="100px"
+              width="200px"
+              url={remoteStream}
+            />
+          </>
+        )}
+
+        {/* <ReactPlayer url={myStream} playing muted />
       <ReactPlayer url={remoteStream} playing /> */}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 
 import { useNavigate } from "react-router-dom";
 import { useSocket } from "../../contexts/Socket/SocketContextProvider";
@@ -16,25 +16,10 @@ function Home() {
     (e) => {
       e.preventDefault();
       socket.emit("room:join", { email, room });
-    },
-    [email, room, socket]
-  );
-
-  const handleJoinRoom = useCallback(
-    (data) => {
-      const { email, room } = data;
-      // console.log("Room Joined", roomId);
       navigate(`/room/${room}`);
     },
-    [navigate]
+    [email, room, socket,navigate]
   );
-
-  useEffect(() => {
-    socket.on("room:join", handleJoinRoom);
-    return () => {
-      socket.off("room:join", handleJoinRoom);
-    };
-  }, [socket, handleJoinRoom]);
 
   return (
     <div className=" flex justify-center items-center">
@@ -63,7 +48,6 @@ function Home() {
           <button
             className="rounded-lg px-2 bg-amber-300 hover:bg-amber-500 cursor-pointer"
             type="submit"
-            onClick={handleJoinRoom}
           >
             Join Room
           </button>
