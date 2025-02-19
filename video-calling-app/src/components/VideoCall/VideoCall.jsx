@@ -31,7 +31,7 @@ function VideoCall() {
       video: true,
     });
     const offer = await peer.getOffer();
-    socket.emit("user: call", { to: remoteSocketId, offer });
+    socket.emit("user:call", { to: remoteSocketId, offer });
     setMyStream(stream);
   }, [remoteSocketId, socket]);
 
