@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import ReactPlayer from "react-player";
 import peer from "../../service/peer";
 import { useSocket } from "../../contexts/Socket/SocketContextProvider";
+import { FiMic, FiMicOff, FiVideo, FiVideoOff } from "react-icons/fi";
 
 // import { usePeer, useSocket } from "../../contexts";
 
@@ -10,6 +11,9 @@ function VideoCall() {
   const [remoteSocketId, setRemoteSocketId] = useState(null);
   const [myStream, setMyStream] = useState("");
   const [remoteStream, setRemoteStream] = useState("");
+
+  const [isMicOn, setIsMicOn] = useState(true);
+  const [isVideoOn, setIsVideoOn] = useState(true);
 
   // const {
   //   peer,
@@ -40,7 +44,7 @@ function VideoCall() {
       setRemoteSocketId(from);
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
-        video: WebTransportDatagramDuplexStream,
+        video: WebTransportDatagramDuplexStream, // true
       });
 
       setMyStream(stream);
@@ -54,12 +58,11 @@ function VideoCall() {
 
   const sendStreams = useCallback(() => {
     console.log("Peer", peer.peer);
-    
+
     for (const track of myStream.getTracks()) {
-      console.log({track, myStream});
-      
+      console.log({ track, myStream });
+
       peer.peer.addTrack(track, myStream);
-      
     }
   }, [myStream]);
 
@@ -102,8 +105,9 @@ function VideoCall() {
       const remoteStream = ev.streams;
       console.log("GOT TRACKS!!");
       setRemoteStream(remoteStream[0]);
+      console.log("RemoteStream", remoteStream);
     });
-  }, []);
+  }, [setRemoteStream, remoteStream]);
 
   useEffect(() => {
     console.log();
@@ -130,46 +134,117 @@ function VideoCall() {
     handleNegoNeedFinal,
   ]);
 
+  // for mick mute and unmute, video and leave button function
+
+  const toggleMic = () => {
+    if (myStream) {
+      myStream
+        .getAudioTracks()
+        .forEach((track) => (track.enabled = !track.enabled));
+      setIsMicOn((prev) => !prev);
+    }
+  };
+
+  const toggleVideo = () => {
+    if (myStream) {
+      myStream
+        .getVideoTracks()
+        .forEach((track) => (track.enabled = !track.enabled));
+      setIsVideoOn((prev) => !prev);
+    }
+  };
+
+  const leaveCall = () => {
+    if (myStream) {
+      myStream.getTracks().forEach((track) => track.stop());
+      setMyStream(null);
+    }
+    setRemoteStream(null);
+    setRemoteSocketId(null);
+    socket.emit("user:left", { to: remoteSocketId }); // Notify other user
+  };
+
   return (
     <div>
       <h1 className="text-amber-600 text-2xl text-center font-bold bg-emerald-200 px-12 py-4">
         VideoCall Room
       </h1>
 
-      <div className="flex justify-center mt-20">
-        <h4>{remoteSocketId ? "Connected" : "No one in room"}</h4>
+      <h4 className="text-center font-bold text-2xl my-4">
+        {remoteSocketId ? "Connected" : "No one in room"}
+      </h4>
 
-        {myStream && <button onClick={sendStreams}>Send Stream</button>}
-
-        {remoteSocketId && <button className="mx-4" onClick={handleCallUser}>CALL</button>}
-
+      <div className="text-center">
         {myStream && (
-          <>
-            <h1 className=" mx-8">My Stream</h1>
-            <ReactPlayer
-              playing
-              muted
-              height="100px"
-              width="200px"
-              url={myStream}
-            />
-          </>
+          <button
+            className="cursor-pointer border-2 rounded-sm px-2"
+            onClick={sendStreams}
+          >
+            Send Stream
+          </button>
         )}
-        {remoteStream && (
-          <>
-            <h1>Remote Stream</h1>
-            <ReactPlayer
-              playing
-              muted
-              height="100px"
-              width="200px"
-              url={remoteStream}
-            />
-          </>
+
+        {remoteSocketId && (
+          <button
+            className="cursor-pointer mx-2 border-2 rounded-sm px-2"
+            onClick={handleCallUser}
+          >
+            CALL
+          </button>
         )}
+
+        <div className="flex justify-center mt-4">
+          {myStream && (
+            <>
+              <h1 className="text-xl font-bold">My Stream</h1>
+              <ReactPlayer
+                playing
+                height="100px"
+                width="200px"
+                url={myStream}
+              />
+            </>
+          )}
+          {remoteStream && (
+            <>
+              <h1 className="text-xl font-bold">Remote Stream</h1>
+              <ReactPlayer
+                playing
+                height="100px"
+                width="200px"
+                url={remoteStream}
+                // playIcon={<FiVideo />}
+              />
+            </>
+          )}
+        </div>
 
         {/* <ReactPlayer url={myStream} playing muted />
       <ReactPlayer url={remoteStream} playing /> */}
+
+        <div className="flex justify-center gap-4 mt-4">
+          <button
+            className="border-2 rounded-sm px-4 py-2 bg-gray-200"
+            onClick={toggleMic}
+          >
+            {isMicOn ? <FiMic /> : <FiMicOff className="text-red-500" />}
+          </button>
+
+          <button
+            className="border-2 rounded-sm px-4 py-2 bg-gray-200"
+            onClick={toggleVideo}
+          >
+            {isVideoOn ? <FiVideo /> : <FiVideoOff className="text-red-500" />}
+          </button>
+
+          <button
+            className="border-2 rounded-sm px-4 py-2 bg-red-500 text-white"
+            onClick={leaveCall}
+          >
+            Leave Call
+          </button>
+        </div>
+        
       </div>
     </div>
   );
